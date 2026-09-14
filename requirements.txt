@@ -1,12 +1,19 @@
+# torch/torchvision are intentionally NOT pinned here — they must already
+# be provided by the GPU host's base image (see README's Vast.ai template
+# instructions). Pinning an exact torch version here risks forcing a
+# reinstall/downgrade of a working, CUDA-matched torch already present.
 fastapi==0.141.1
 uvicorn[standard]==0.35.0
 python-multipart==0.0.20
 httpx==0.27.2
 pytest==8.3.3
-torch==2.4.0
-torchvision==0.19.0
 accelerate==0.31.0
-git+https://github.com/huggingface/diffusers.git
+# Unpinned (PyPI release, not git HEAD) — pinning to git+https://github.com/
+# huggingface/diffusers.git once pulled in a dev build requiring
+# huggingface-hub>=1.31.0, which conflicts with transformers==4.46.3's
+# huggingface-hub<1.0 requirement. Leaving this unpinned lets pip's
+# resolver pick a diffusers release compatible with everything else below.
+diffusers
 matplotlib==3.9.1
 numpy==1.26.4
 opencv_python==4.10.0.84
@@ -23,4 +30,5 @@ omegaconf==2.3.0
 pycocotools==2.0.8
 av==12.3.0
 peft>=0.17.0
-huggingface_hub>=0.34.0,<2.0
+huggingface_hub
+torchvision

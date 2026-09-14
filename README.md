@@ -11,12 +11,23 @@ for the full design.
    work), using a template with CUDA + PyTorch preinstalled. When
    creating the instance, map a container port (e.g. 8000) to a public
    port.
-2. SSH into the instance:
+2. SSH into the instance. Many Vast.ai PyTorch templates (e.g.
+   `vastai/pytorch`) already activate a virtualenv with a working,
+   CUDA-matched torch on login (prompt shows `(main)`). Check before
+   creating a new venv:
+   ```bash
+   python -c "import torch; print(torch.__version__, torch.cuda.is_available())"
+   ```
+   If that prints a version and `True`, skip creating a venv and
+   install straight into the active one — `requirements.txt`
+   deliberately doesn't pin torch/torchvision for exactly this reason.
+   If there's no working torch+CUDA already, create a venv first
+   (`python3 -m venv venv && source venv/bin/activate`) and install a
+   CUDA-matched torch build before the steps below.
    ```bash
    git clone <this-catvton-service-repo-url>
    cd catvton-service
    git clone https://github.com/Zheng-Chong/CatVTON vendor/CatVTON
-   python3 -m venv venv && source venv/bin/activate
    pip install -r requirements.txt
    export CATVTON_API_KEY="<choose a long random secret>"
    uvicorn app.main:app --host 0.0.0.0 --port 8000
