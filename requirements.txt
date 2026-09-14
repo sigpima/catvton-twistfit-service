@@ -7,15 +7,15 @@ uvicorn[standard]==0.35.0
 python-multipart==0.0.20
 httpx==0.27.2
 pytest==8.3.3
-# accelerate and diffusers are intentionally NOT pinned — pinning
-# git+https://github.com/huggingface/diffusers.git once pulled in a dev
-# build requiring huggingface-hub>=1.31.0 (conflicting with
-# transformers==4.46.3's huggingface-hub<1.0), and separately, an older
-# pinned accelerate (0.31.0) was missing `clear_device_cache`, which a
-# newer diffusers imports at runtime — a version skew pip's resolver
-# doesn't catch since it's a runtime import, not a declared dependency
-# bound. Leaving both unpinned lets pip settle on a mutually compatible,
-# current pair.
+# accelerate, diffusers, and transformers are intentionally NOT pinned.
+# CatVTON's own pins (transformers==4.46.3, accelerate==0.31.0, a fixed
+# diffusers commit) are from mid-2024 and increasingly mismatch a
+# current diffusers release at runtime (missing clear_device_cache in
+# accelerate, missing Dinov2WithRegistersConfig in transformers, etc) —
+# each one a lazy-import failure pip's resolver doesn't catch, since
+# these are dynamic imports, not declared dependency bounds. Leaving
+# all three unpinned lets pip settle on a mutually compatible, current
+# set rather than fixing one skew at a time.
 accelerate
 diffusers
 matplotlib==3.9.1
@@ -27,7 +27,7 @@ scipy==1.13.1
 setuptools==51.0.0
 scikit-image==0.24.0
 tqdm==4.66.4
-transformers==4.46.3
+transformers
 fvcore==0.1.5.post20221221
 cloudpickle==3.0.0
 omegaconf==2.3.0
