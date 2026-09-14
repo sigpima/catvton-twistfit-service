@@ -7,12 +7,16 @@ uvicorn[standard]==0.35.0
 python-multipart==0.0.20
 httpx==0.27.2
 pytest==8.3.3
-accelerate==0.31.0
-# Unpinned (PyPI release, not git HEAD) — pinning to git+https://github.com/
-# huggingface/diffusers.git once pulled in a dev build requiring
-# huggingface-hub>=1.31.0, which conflicts with transformers==4.46.3's
-# huggingface-hub<1.0 requirement. Leaving this unpinned lets pip's
-# resolver pick a diffusers release compatible with everything else below.
+# accelerate and diffusers are intentionally NOT pinned — pinning
+# git+https://github.com/huggingface/diffusers.git once pulled in a dev
+# build requiring huggingface-hub>=1.31.0 (conflicting with
+# transformers==4.46.3's huggingface-hub<1.0), and separately, an older
+# pinned accelerate (0.31.0) was missing `clear_device_cache`, which a
+# newer diffusers imports at runtime — a version skew pip's resolver
+# doesn't catch since it's a runtime import, not a declared dependency
+# bound. Leaving both unpinned lets pip settle on a mutually compatible,
+# current pair.
+accelerate
 diffusers
 matplotlib==3.9.1
 numpy==1.26.4
