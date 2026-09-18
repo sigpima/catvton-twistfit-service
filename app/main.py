@@ -1,9 +1,10 @@
+import base64
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Response, UploadFile, status
 
 from app.auth import require_api_key
-from app.generator import CLOTH_TYPES, default_generate_fn
+from app.generator import CLOTH_TYPES, default_generate_batch_fn, default_generate_fn
 
 
 @asynccontextmanager
@@ -11,15 +12,17 @@ async def lifespan(app: FastAPI):
     import os
 
     if os.environ.get("CATVTON_SKIP_MODEL_LOAD") != "1":
-        from app.pipeline import generate_with_pipeline, load_pipeline
+        from app.pipeline import generate_batch_with_pipeline, generate_with_pipeline, load_pipeline
 
         bundle = load_pipeline()
         app.state.generate_fn = lambda p, g, c: generate_with_pipeline(bundle, p, g, c)
+        app.state.generate_batch_fn = lambda ps, g, c: generate_batch_with_pipeline(bundle, ps, g, c)
     yield
 
 
 app = FastAPI(title="CatVTON Service", lifespan=lifespan)
 app.state.generate_fn = default_generate_fn
+app.state.generate_batch_fn = default_generate_batch_fn
 
 
 @app.get("/health")
@@ -42,3 +45,25 @@ async def generate(
     garment_bytes = await garment_image.read()
     result_bytes = app.state.generate_fn(person_bytes, garment_bytes, cloth_type)
     return Response(content=result_bytes, media_type="image/png")
+
+
+@app.post("/generate-batch", dependencies=[Depends(require_api_key)])
+async def generate_batch(
+    person_images: list[UploadFile] = File(...),
+    garment_image: UploadFile = File(...),
+    cloth_type: str = Form(...),
+) -> dict[str, list[str]]:
+    if cloth_type not in CLOTH_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"cloth_type must be one of {CLOTH_TYPES}",
+        )
+    if not person_images:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="At least one person_image is required",
+        )
+    person_bytes_list = [await person_image_file.read() for person_image_file in person_images]
+    garment_bytes = await garment_image.read()
+    result_bytes_list = app.state.generate_batch_fn(person_bytes_list, garment_bytes, cloth_type)
+    return {"images": [base64.b64encode(result).decode("ascii") for result in result_bytes_list]}
