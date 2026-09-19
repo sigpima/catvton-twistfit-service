@@ -49,6 +49,10 @@ def load_pipeline() -> PipelineBundle:
         weight_dtype=init_weight_dtype("bf16"),
         use_tf32=True,
         device="cuda",
+        # Stable Diffusion's stock CLIP-based safety checker false-positives
+        # heavily on ordinary clothed try-on photos (skin tone/lighting/pose),
+        # replacing good results with a black/NSFW placeholder image.
+        skip_safety_check=True,
     )
 
     mask_processor = VaeImageProcessor(
